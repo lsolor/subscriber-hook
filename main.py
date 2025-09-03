@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from api.routers import events
 from threading import Event
 from infra.inmemory_queue import InMemoryQueue
+from service.dispatcher import Dispatcher
 from service.worker import Worker
 
 @asynccontextmanager
@@ -17,6 +18,7 @@ async def lifespan(app: FastAPI):
     app.state.registry = registry
     metrics = {"events_received": 0, "events_processed": 0, "events_failed": 0}
     app.state.metrics = metrics
+    
     dlq = []
     app.state.dlq = dlq
     queue = InMemoryQueue()
@@ -39,6 +41,7 @@ async def lifespan(app: FastAPI):
     stop_event = Event()
     app.state.stop_event = stop_event
     print("Stop event initialized.")
+    app.state.dispatcher = Dispatcher(app.state.queue, app.state.registry, app.state.metrics)
     # start worker
     in_flight_cap = defaultdict(int)
     app.state.in_flight_cap = in_flight_cap
@@ -46,7 +49,7 @@ async def lifespan(app: FastAPI):
     app.state.worker = worker
     worker.start_background()
     print("Worker started.")
-
+    
     yield
 
     # Shutdown code

@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request
 from api.schemas.event import EventRequest, EventResponse 
-from service.dispatcher import Dispatcher
 
 
 router = APIRouter(prefix="/events", tags=["events"])
@@ -8,12 +7,7 @@ router = APIRouter(prefix="/events", tags=["events"])
 @router.post("/", response_model=EventResponse, status_code=202)
 async def create_event(request: Request, event: EventRequest):
     # Logic to create the event
-    dispatcher: Dispatcher = Dispatcher(
-        queue=request.app.state.queue,
-        registry=request.app.state.registry,
-        metrics=request.app.state.metrics
-    )
-    dispatcher.enqueue_item(event)
+    request.app.state.dispatcher.enqueue(event)
     return EventResponse(
         id=event.id,
         status="created",

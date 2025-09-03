@@ -1,4 +1,5 @@
 # thin service api used by the router to push deliveries to the queue
+from time import time
 from api.schemas.event import EventRequest
 from infra.models.enqueue_item import EnqueueItem
 
@@ -9,7 +10,7 @@ class Dispatcher:
         self.registry = registry
         self.metrics = metrics
 
-    def enqueue_item(self, event: EventRequest):
+    def enqueue(self, event: EventRequest):
         # logic to enqueue item
         # Make a delivery item for each endpoint in the registry for the event type
         endpoints = self.registry.get(event.event_type, [])
@@ -18,9 +19,10 @@ class Dispatcher:
                 event_id=event.id,
                 event_type=event.event_type,
                 data=event.data,
-                due_time=now(),  # immediate
+                due_time= time.monotonic(),  # immediate delivery
                 correlation_id=event.correlation_id,
-                endpoint_url=endpoint
+                endpoint_url=endpoint,
+                max_attempts=4
             )
             self.queue.enqueue(enqueue_item)
         self.metrics["events_received"] += 1
