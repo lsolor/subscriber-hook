@@ -5,8 +5,8 @@ from service.dispatcher import Dispatcher
 
 router = APIRouter(prefix="/events", tags=["events"])
 # Validate and then enqueue the event
-@router.post("/", response_model=event_response : EventResponse, status_code=202)
-async def create_event(request : Request, event: EventRequest):
+@router.post("/", response_model=EventResponse, status_code=202)
+async def create_event(request: Request, event: EventRequest):
     # Logic to create the event
     dispatcher: Dispatcher = Dispatcher(
         queue=request.app.state.queue,
@@ -16,8 +16,7 @@ async def create_event(request : Request, event: EventRequest):
     dispatcher.enqueue_item(event)
     return EventResponse(
         id=event.id,
-        type=event.type,
         status="created",
         correlation_id=event.correlation_id,
-        message="Event created successfully"
+        message="Event created successfully",
     )

@@ -1,15 +1,16 @@
 import heapq
-from multiprocessing import heap
+
+from infra.models.enqueue_item import EnqueueItem
 
 
 class InMemoryQueue:
     def __init__(self):
         self.heap = []  
     
-    def enqueue(self, item):
+    def enqueue(self, item: EnqueueItem):
         heapq.heappush(self.heap, (item.due_time, item))
 
-    def dequeue(self):
+    def dequeue(self) -> tuple[float, EnqueueItem] | tuple[None, None]:
         if self.heap:
             return heapq.heappop(self.heap)
         return None, None

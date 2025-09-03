@@ -11,7 +11,9 @@ async def lifespan(app: FastAPI):
     # Startup code
     print("Hello from subscriber-hook!")
     registry = {"type1": ["http://example.com/callback1", "http://example.com/callback2"],
-                "type2": ["http://example.com/callback3"]}
+                "type2": ["http://example.com/callback3"],
+                "type3": ["http://example.com/callback4", "http://example.com/callback5", "http://example.com/callback6"]}
+    
     app.state.registry = registry
     metrics = {"events_received": 0, "events_processed": 0, "events_failed": 0}
     app.state.metrics = metrics
