@@ -1,14 +1,18 @@
 from collections import defaultdict
 from fastapi import FastAPI
 from api.routers import events
-import service
+from infra.inmemory_queue import InMemoryQueue
+from service.worker import Worker 
+
 
 app = FastAPI(title="subscriber-hook", version="0.1.0")
 
 app.include_router(events.router)
 
+app.startup_event(startup)
+app.shutdown_event(shutdown)
 
-def main():
+def startup():
     print("Hello from subscriber-hook!")
     # App startup:
     # build subscriber registry
@@ -23,7 +27,7 @@ def main():
     dlq = []
     app.state.dlq = dlq
     print("Dead-letter queue initialized.")
-    queue = infra.inmemory_queue.heap
+    queue = InMemoryQueue()
     app.state.queue = queue
     print("In-memory queue initialized.")
     # dedupe set
@@ -47,7 +51,7 @@ def main():
     # start worker
     in_flight_cap = defaultdict(int)
     app.state.in_flight_cap = in_flight_cap
-    worker = service.worker.Worker(queue, config, in_flight_cap, in_flight_set, delivered_set, dlq, metrics, stop_flag)
+    worker = Worker(queue, config, in_flight_cap, in_flight_set, delivered_set, dlq, metrics, stop_flag)
     app.state.worker = worker
     print("Worker initialized.")
 
@@ -55,8 +59,12 @@ def main():
     # app shutdown:
     # stop worker cleanly
     # flush logs/counters
-
+def shutdown():
+    app.state.stop_flag = True
+    print("Shutdown initiated. Stopping worker...")
+    app.state.worker.stop()
+    print("Worker stopped. Shutdown complete.")
 
 
 if __name__ == "__main__":
-    main()
+    startup()
