@@ -1,12 +1,21 @@
-# dequeue implementation, sends HTTP, classifies, schedules retries and moves to DLQ after meax attempts 
-
+import threading
+import time
 from collections import defaultdict
-from anyio import current_time
 from infra.inmemory_queue import InMemoryQueue
-from service.dispatcher import enqueue_item
+
 
 class Worker:
-    def __init__(self, queue: InMemoryQueue, config: dict, in_flight_cap: defaultdict, in_flight_set: set, delivered_set: set, dlq: list, metrics: dict, stop_flag: bool):
+    def __init__(
+        self,
+        queue: InMemoryQueue,
+        config: dict,
+        in_flight_cap: defaultdict,
+        in_flight_set: set,
+        delivered_set: set,
+        dlq: list,
+        metrics: dict,
+        stop_event: threading.Event,
+    ):
         self.queue = queue
         self.config = config
         self.in_flight_cap = in_flight_cap
@@ -14,13 +23,22 @@ class Worker:
         self.delivered_set = delivered_set
         self.dlq = dlq
         self.metrics = metrics
-        self.stop_flag = stop_flag
+        self.stop_event = stop_event
+        self._thread: threading.Thread | None = None
 
-    def start(self):
-        while True:
-            due_time, item = self.queue.dequeue()
-            # processs time is not now
-            if due_time < current_time():
-                enqueue_item(item, self.processor)
-            else:
-                self.queue.enqueue(item)
+    def start_background(self):
+        if self._thread and self._thread.is_alive():
+            return
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        self.stop_event.set()
+        if self._thread:
+            self._thread.join(timeout=2.0)
+
+    def _run(self):
+        # Minimal loop placeholder; flesh out delivery handling later
+        while not self.stop_event.is_set():
+            # In an MVP, you can poll the queue periodically
+            time.sleep(0.1)

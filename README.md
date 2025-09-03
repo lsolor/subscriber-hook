@@ -1,6 +1,7 @@
 # subscriber-hook
 to run
-uv run uvicorn dev main.py
+uv run uvicorn main:app --reload --workers 1
+
 Functional (top 3)
 - At-least-once delivery with idempotency per (event_id, endpoint).
 - Retry with exponential backoff + jitter, with outcome rules: 2xx=success; 5xx/timeout/429=retry (honor Retry-After); most 4xx=terminal.
