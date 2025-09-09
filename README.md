@@ -1,5 +1,5 @@
 # subscriber-hook
-to run
+to run:
 uv run uvicorn main:app --reload --workers 1
 
 Functional (top 3)

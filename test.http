@@ -1,0 +1,11 @@
+POST http://localhost:8000/events
+Content-Type: application/json
+X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
+
+{
+  "id": "123",
+  "type": "EmailNotification",
+  "payload": {
+      "email": "user@example.com"
+  }
+}
