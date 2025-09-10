@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, patch
+import unittest
 from fastapi.testclient import TestClient
 from api.schemas.event import EventRequest, EventResponse
 from api.routers.events import router
@@ -6,42 +6,49 @@ from main import app
 
 client = TestClient(app)
 
-# happy path: Post with a valid request 
-def test_create_event_happy_path():
-    # Arrange
-    request = EventRequest(id=1, type="user.created", payload={"user_id": 123})
+class TestEventRoutes(unittest.TestCase):
 
-    # Act
-    resp = client.post("/events", json=request)
+    @classmethod
+    def setUpClass(cls):
+        cls.client = TestClient(app)
 
-    # Assert
-    assert resp.status_code == 202
-    body = resp.json()
-    assert body["id"] == "1"
-    assert body["status"] == "accepted"
-    assert body["message"]
+    def test_create_event_happy_path(self):
+        # Arrange
+        request = EventRequest(id=1, type="user.created", payload={"user_id": 123})
+
+        # Act
+        resp = self.client.post("/events", json=request)
+        
+
+        # Assert
+        self.assertEqual(resp.status_code, 202)
+        body = resp.json()
+        self.assertEqual(body["id"], "1")
+        self.assertEqual(body["status"], "accepted")
+        self.assertTrue(body["message"])
+        
+        corr = resp.headers.get("X-Correlation-Id")
+        self.assertIsNotNone(corr)
+        self.assertIsInstance(corr, str)
+
+    def test_create_event_happy_path_no_correlation_id(self):
+        # Arrange
+        request = EventRequest(id=1, type="user.created", payload={"user_id": 123})
+        supplied = "1234"
+
+        # Act
+        resp = self.client.post("/events", json=request, headers={"X-Correlation-Id": supplied})
     
-    corr = resp.headers.get("X-Correlation-Id")
-    assert corr and isinstance(corr, str)
+        # Assert
+        self.assertEqual(resp.status_code, 202)
+        body = resp.json()
+        self.assertEqual(body["id"], "1")
+        self.assertEqual(body["status"], "accepted")
+        self.assertTrue(body["message"])
 
-def test_create_event_happy_path_no_correlation_id():
-    # Arrange
-    request = EventRequest(id=1, type="user.created", payload={"user_id": 123})
-    supplied = "1234"
+        self.assertEqual(resp.headers.get("X-Correlation-Id"), supplied)
 
-    # Act
-    resp = client.post("/events", json=request, headers={"X-Correlation-Id": supplied})
+    def test_create_event_missing_required_field_returns_422(self):
+        resp = self.client.post("/events", json={"type": "user.created", "payload": {}})
 
-    # Assert
-    assert resp.status_code == 202
-    body = resp.json()
-    assert body["id"] == "1"
-    assert body["status"] == "accepted"
-    assert body["message"]
-    
-    assert resp.headers.get("X-Correlation-Id") == supplied
-
-def test_create_event_missing_required_field_returns_422():
-    resp = client.post("/events", json={"type": "user.created", "payload": {}})
-
-    assert resp.status_code == 422
+        self.assertEqual(resp.status_code, 422)
