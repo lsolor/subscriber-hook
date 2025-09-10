@@ -4,7 +4,43 @@ X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
 
 {
   "id": "123",
-  "type": "EmailNotification",
+  "type": "email.notification",
+  "payload": {
+      "email": "user@example.com"
+  }
+}
+
+
+# Invalid Request
+POST http://localhost:8000/events
+Content-Type: application/json
+X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
+
+{
+  "type": "email.notification",
+  "payload": {
+      "email": "user@example.com"
+  }
+}
+
+POST http://localhost:8000/events
+Content-Type: application/json
+X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
+
+{
+  "id": "123",
+  "type": "foo.bar",
+  "payload": {
+      "email": "user@example.com"
+  }
+}
+
+POST http://localhost:8000/events
+Content-Type: application/json
+X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
+
+{
+  "type": "email.notification",
   "payload": {
       "email": "user@example.com"
   }

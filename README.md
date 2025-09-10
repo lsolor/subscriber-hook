@@ -1,6 +1,6 @@
 # subscriber-hook
-to run:
-uv run uvicorn main:app --reload --workers 1
+To run, you need to be in root folder 
+uv run uvicorn app.main:app --reload
 
 Functional (top 3)
 - At-least-once delivery with idempotency per (event_id, endpoint).
