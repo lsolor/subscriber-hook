@@ -2,29 +2,46 @@ from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 from api.schemas.event import EventRequest, EventResponse
 from api.routers.events import router
+from main import app
+
+client = TestClient(app)
 
 # happy path: Post with a valid request 
 def test_create_event_happy_path():
     # Arrange
-    client = TestClient(router)
     request = EventRequest(id=1, type="user.created", payload={"user_id": 123})
-    expected_response = EventResponse(id=1, status="created", correlation_id="some-correlation-id", message="Event has been accepted for processing")
+
     # Act
-    response = client.post("/events", json=request.dict())
+    resp = client.post("/events", json=request)
 
     # Assert
-    assert response.status_code == 202
-    assert response.json() == expected_response.dict()
-
+    assert resp.status_code == 202
+    body = resp.json()
+    assert body["id"] == "1"
+    assert body["status"] == "accepted"
+    assert body["message"]
+    
+    corr = resp.headers.get("X-Correlation-Id")
+    assert corr and isinstance(corr, str)
 
 def test_create_event_happy_path_no_correlation_id():
     # Arrange
-    client = TestClient(router)
     request = EventRequest(id=1, type="user.created", payload={"user_id": 123})
-    expected_response = EventResponse(id=1, status="created", correlation_id="some-correlation-id", message="Event has been accepted for processing")
+    supplied = "1234"
+
     # Act
-    response = client.post("/events", json=request.dict())
+    resp = client.post("/events", json=request, headers={"X-Correlation-Id": supplied})
 
     # Assert
-    assert response.status_code == 202
-    assert response.json() == expected_response.dict()
+    assert resp.status_code == 202
+    body = resp.json()
+    assert body["id"] == "1"
+    assert body["status"] == "accepted"
+    assert body["message"]
+    
+    assert resp.headers.get("X-Correlation-Id") == supplied
+
+def test_create_event_missing_required_field_returns_422():
+    resp = client.post("/events", json={"type": "user.created", "payload": {}})
+
+    assert resp.status_code == 422
