@@ -9,18 +9,20 @@ class Worker:
         self,
         queue: InMemoryQueue,
         config: dict,
-        in_flight_cap: defaultdict,
-        in_flight_set: set,
-        delivered_set: set,
+        # in_flight_cap: defaultdict,
+        # in_flight_set: set,
+        # delivered_set: set,
+        dedup : dict,
         dlq: list,
         metrics: dict,
         stop_event: threading.Event,
     ):
         self.queue = queue
         self.config = config
-        self.in_flight_cap = in_flight_cap
-        self.in_flight_set = in_flight_set
-        self.delivered_set = delivered_set
+        # self.in_flight_cap = in_flight_cap
+        # self.in_flight_set = in_flight_set
+        # self.delivered_set = delivered_set
+        self.dedup = dedup
         self.dlq = dlq
         self.metrics = metrics
         self.stop_event = stop_event

@@ -6,8 +6,8 @@ from threading import Event
 from app.infra.inmemory_queue import InMemoryQueue
 from app.service.dispatcher import Dispatcher
 import logging
-
-# from app.service.worker import Worker
+from app.service.worker import Worker
+from app.constants import EventType
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,14 +16,32 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup code
-    logger.info("Hello from subscriber-hook!")
+    c = {
+        "max_retries": 4,
+        "max_timeout": 30,
+        "jitter": 0.2
+    }
+    registry = { EventType.USER_CREATED: ["foo.com", "plaaaa.com"],
+                EventType.EMAIL_NOTIFICATION: ["bar.com", "gherk.com"]
 
+    }
+    dedup = defaultdict(str)
+    dlq = []
+    event = Event
     q = InMemoryQueue()
+    
+    metrics= defaultdict(int)
+    w = Worker(queue=q, config= c, dedup=dedup, dlq=dlq, metrics=metrics, stop_event=event)
     app.state.queue = q
 
     app.state.dispatcher = Dispatcher(
-        queue=q, registry=defaultdict(list), metrics=defaultdict(int)
+        queue=q, registry=registry, metrics=metrics
     )
+    app.state.registry = registry
+    app.state.metrics = metrics
+    app.state.worker = w
+    app.state.config = c
+    app.state.dedup = dedup
 
     yield
 
