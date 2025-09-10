@@ -1,29 +1,34 @@
-POST http://localhost:8000/events
+POST http://localhost:8000/events/
 Content-Type: application/json
 X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
 
 {
   "id": "123",
   "type": "email.notification",
-  "payload": {
+  "data": {
       "email": "user@example.com"
   }
 }
 
+###
+curl -i -X POST http://localhost:8000/events/ \
+  -H 'Content-Type: application/json' \
+  -H 'X-Correlation-Id: 123e4567-e89b-12d3-a456-426614174000' \
+  -d '{"id":"123","type":"email.notification","data":{"email":"user@example.com"}}'
 
-# Invalid Request
-POST http://localhost:8000/events
+### Invalid Request
+POST http://localhost:8000/events/
 Content-Type: application/json
 X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
 
 {
   "type": "email.notification",
-  "payload": {
+  "data": {
       "email": "user@example.com"
   }
 }
-
-POST http://localhost:8000/events
+###
+POST http://localhost:8000/events/
 Content-Type: application/json
 X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
 
@@ -35,13 +40,14 @@ X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
   }
 }
 
-POST http://localhost:8000/events
+###
+POST http://localhost:8000/events/
 Content-Type: application/json
 X-Correlation-ID: 123e4567-e89b-12d3-a456-426614174000
 
 {
   "type": "email.notification",
-  "payload": {
+  "data": {
       "email": "user@example.com"
   }
 }

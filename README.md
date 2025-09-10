@@ -1,7 +1,17 @@
 # subscriber-hook
-To run, you need to be in root folder 
+# Run
 uv run uvicorn app.main:app --reload
 
+# Health
+curl -s localhost:8000/healthz
+
+# Post an event
+curl -i -X POST localhost:8000/events/ \
+  -H 'Content-Type: application/json' \
+  -H 'X-Correlation-Id: test-1' \
+  -d '{"id":"123","type":"email.notification","data":{"email":"user@example.com"}}'
+
+  
 Functional (top 3)
 - At-least-once delivery with idempotency per (event_id, endpoint).
 - Retry with exponential backoff + jitter, with outcome rules: 2xx=success; 5xx/timeout/429=retry (honor Retry-After); most 4xx=terminal.
@@ -11,6 +21,10 @@ Non-functional (top 3)
 - Low-latency intake: quick enqueue + strict request timeout.
 - Isolation & fairness: small per-endpoint concurrency cap (+ a global cap) so one bad subscriber can’t starve others.
 - Observability: counters (enqueued/sent/success/retry/DLQ) and structured logs with event_id, endpoint, attempt, next_due.
+
+model_config = {"json_schema_extra": {"examples": [{
+    "id": "123", "type": "email.notification", "data": {"email": "user@example.com"}
+}]}}
 
 
 Entities
