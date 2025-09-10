@@ -13,15 +13,19 @@ class TestEventRoutes(unittest.TestCase):
 
     def test_create_event_happy_path(self):
         # Arrange
-        request = EventRequest(id=1, type="user.created", payload={"user_id": 123})
+        payload = {
+            "id": "1",
+            "type": "user.created",
+            "payload": {"user_id": 123}
+        }
 
         # Act
-        resp = self.client.post("/events", json=request)
-        
+        resp = self.client.post("/events", json=payload)
+
         # Assert
         self.assertEqual(resp.status_code, 202)
         body = resp.json()
-        self.assertEqual(body["id"], "1")
+        self.assertEqual(body["id"], 1)
         self.assertEqual(body["status"], "accepted")
         self.assertTrue(body["message"])
         
@@ -31,16 +35,20 @@ class TestEventRoutes(unittest.TestCase):
 
     def test_create_event_happy_path_no_correlation_id(self):
         # Arrange
-        request = EventRequest(id=1, type="user.created", payload={"user_id": 123})
+        payload = {
+            "id": "1",
+            "type": "user.created",
+            "payload": {"user_id": 123}
+        }
         supplied = "1234"
 
         # Act
-        resp = self.client.post("/events", json=request, headers={"X-Correlation-Id": supplied})
-    
+        resp = self.client.post("/events", json=payload, headers={"X-Correlation-Id": supplied})
+
         # Assert
         self.assertEqual(resp.status_code, 202)
         body = resp.json()
-        self.assertEqual(body["id"], "1")
+        self.assertEqual(body["id"], 1)
         self.assertEqual(body["status"], "accepted")
         self.assertTrue(body["message"])
 

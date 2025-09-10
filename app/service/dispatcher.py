@@ -1,7 +1,7 @@
 # thin service api used by the router to push deliveries to the queue
 from time import time
-from api.schemas.event import EventRequest
-from infra.models.enqueue_item import EnqueueItem
+from app.api.schemas.event import EventRequest
+from app.infra.models.enqueue_item import EnqueueItem
 
 
 class Dispatcher:

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Response, status
-from api.schemas.event import EventRequest, EventResponse 
+from app.api.schemas.event import EventRequest, EventResponse 
 from uuid import uuid4
 import logging
 

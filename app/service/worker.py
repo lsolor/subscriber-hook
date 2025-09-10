@@ -1,7 +1,7 @@
 import threading
 import time
 from collections import defaultdict
-from infra.inmemory_queue import InMemoryQueue
+from app.infra.inmemory_queue import InMemoryQueue
 
 
 class Worker:

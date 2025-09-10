@@ -1,6 +1,6 @@
 import heapq
 import threading
-from infra.models.enqueue_item import EnqueueItem
+from app.infra.models.enqueue_item import EnqueueItem
 
 
 class InMemoryQueue:
