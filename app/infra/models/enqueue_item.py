@@ -1,13 +1,15 @@
+from app.constants import EventType
+
 class EnqueueItem:
     def __init__(
         self,
         event_id: int,
-        event_type: str,
+        event_type: EventType,
         data: dict,
-        due_time: float = 0.0,
-        correlation_id: str = None,
-        endpoint_url: str = None,
+        correlation_id: str,
+        endpoint_url: str,
         max_attempts: int = 4,
+        due_time: float = 0.0,
     ):
         self.event_id = event_id
         self.event_type = event_type
