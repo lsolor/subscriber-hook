@@ -1,11 +1,11 @@
 from collections import defaultdict
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from api.routers import events, health
+from app.api.routers import events, health
 from threading import Event
-from infra.inmemory_queue import InMemoryQueue
-from service.dispatcher import Dispatcher
-from service.worker import Worker
+from app.infra.inmemory_queue import InMemoryQueue
+from app.service.dispatcher import Dispatcher
+from app.service.worker import Worker
 import logging
 
 logging.basicConfig(level=logging.INFO)

@@ -1,8 +1,7 @@
 import unittest
 from fastapi.testclient import TestClient
-from api.schemas.event import EventRequest, EventResponse
-from api.routers.events import router
-from main import app
+from app.api.schemas.event import EventRequest, EventResponse
+from app.main import app
 
 client = TestClient(app)
 
@@ -19,7 +18,6 @@ class TestEventRoutes(unittest.TestCase):
         # Act
         resp = self.client.post("/events", json=request)
         
-
         # Assert
         self.assertEqual(resp.status_code, 202)
         body = resp.json()
