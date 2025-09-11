@@ -30,11 +30,12 @@ class InMemoryQueue:
             seq = self._next_seq()
             heapq.heappush(self._heap, (float(due_time), seq, item))
 
-    def dequeue(self, now) -> tuple[float, EnqueueItem] | tuple[None, None]:
+    def dequeue(self, now) -> EnqueueItem | None:
         with self._lock:
             if not self._heap:
                 return None
-            if self.peek()[0] < now:
+            head_due, _, _ = self._heap[0]
+            if head_due > now:
                 return None
             due_time, _seq, item = heapq.heappop(self._heap)
             return item

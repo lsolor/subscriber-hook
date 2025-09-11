@@ -17,9 +17,11 @@ class TestEventRoutes(unittest.TestCase):
 
     def setUp(self):
         q = InMemoryQueue()
+        registry = {"user.created":["http://example.com/webhook"]}
         dispatcher = Dispatcher(
-            queue=q, registry=defaultdict(list), metrics=defaultdict(int)
+            queue=q, registry=registry, metrics=defaultdict(int)
         )
+        app.state.registry = registry
         app.state.queue = q
         app.state.dispatcher = dispatcher
 
@@ -42,7 +44,7 @@ class TestEventRoutes(unittest.TestCase):
         self.assertIsNotNone(corr)
         self.assertIsInstance(corr, str)
 
-        item = app.state.queue.items[0]
+        _, item = app.state.queue.peek()
         self.assertEqual(item.event_id, 1)
 
         record = cm.records[0]
@@ -76,7 +78,7 @@ class TestEventRoutes(unittest.TestCase):
         self.assertEqual(record.correlation_id, supplied)
         self.assertEqual(record.event_id, 1)
 
-        item = app.state.queue.items[0]
+        _, item = app.state.queue.peek()
         self.assertEqual(item.event_id, 1)
 
     def test_create_event_missing_required_field_returns_422(self):
