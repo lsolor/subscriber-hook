@@ -2,7 +2,12 @@ import threading
 import time
 from collections import defaultdict
 from app.infra.inmemory_queue import InMemoryQueue
+from app.infra.models.enqueue_item import EnqueueItem
+import requests
+import logging
+from fastapi import status
 
+logger = logging.getLogger(__name__)
 
 class Worker:
     def __init__(
@@ -13,7 +18,6 @@ class Worker:
         # in_flight_set: set,
         # delivered_set: set,
         dedup : dict,
-        dlq: list,
         metrics: dict,
         stop_event: threading.Event,
     ):
@@ -23,7 +27,6 @@ class Worker:
         # self.in_flight_set = in_flight_set
         # self.delivered_set = delivered_set
         self.dedup = dedup
-        self.dlq = dlq
         self.metrics = metrics
         self.stop_event = stop_event
         self._thread: threading.Thread | None = None
@@ -42,5 +45,47 @@ class Worker:
     def _run(self):
         # Minimal loop placeholder; flesh out delivery handling later
         while not self.stop_event.is_set():
-            # In an MVP, you can poll the queue periodically
-            time.sleep(0.1)
+            now = time.monotonic()
+            item = self.queue.dequeue(now)
+            
+            if not item: 
+                logger.info("No item available for worker")
+                continue
+
+            if self.dedup[item.idempotent_key] in ("processed", "failed"):
+                logger.info("already processed")            
+            self.process(item, now)
+
+    def process(self, item: EnqueueItem, now: float) -> None:
+
+        resp = requests.post(item.endpoint_url, json=item.data)
+
+        if resp.status_code == status.HTTP_202_ACCEPTED:
+            self.dedup[item.idempotent_key] = "completed"
+            self.metrics["success"] += 1 
+            logger.info(f"{item.idempotent_key} succeeded")
+        
+        elif resp.status_code == status.HTTP_429_TOO_MANY_REQUESTS or 500 <= resp.status_code < 600:
+            if item.attempts + 1 < 4:
+                logger.info(f"{item.idempotent_key} failed, but is retryable. recalculating retrying")
+                self.metrics["retries"] += 1
+                backoff = self.calc_backoff()
+                item.attempts += 1
+                self.queue.nack_requeue(item, now + backoff)
+            
+            else:
+                logger.info(f"{item.idempotent_key} failed, and has hit max attempts")
+                self.dedup[item.idempotent_key] = "failed"
+                self.metrics["failure"] += 1
+                self.dlq.append(item.idempotent_key)
+
+        else:
+            self.dedup[item.idempotent_key] = "failed"
+            self.metrics["failure"] += 1
+            self.dlq.append(item.idempotent_key)
+    
+    def calc_backoff(self, item: EnqueueItem):
+        return 2.2
+
+
+

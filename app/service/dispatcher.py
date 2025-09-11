@@ -14,7 +14,7 @@ class Dispatcher:
         self.registry = registry
         self.metrics = metrics
 
-    def enqueue(self, event: EventRequest, correlation_id: str) -> None:
+    def enqueue(self, event: EventRequest, due_time: float, correlation_id: str) -> None:
         # logic to enqueue item
         # Make a delivery item for each endpoint in the registry for the event type
         endpoints = self.registry.get(event.type, [])
@@ -23,9 +23,9 @@ class Dispatcher:
             event_id=event.id,
             event_type=event.type,
             data=event.data,
-            due_time=time.monotonic(),  # immediate delivery
+            due_time=due_time,  # immediate delivery
             correlation_id=correlation_id,
-            endpoint_url=placeholder,  # placeholder, in real use would come from registry
+            endpoint_url=endpoint,  
             max_attempts=4,
         )
             self.queue.enqueue(enqueue_item)
@@ -34,3 +34,4 @@ class Dispatcher:
         logger.info(
             f"Enqueued item: {event.type} for endpoint {len(endpoints)} at {enqueue_item.due_time}"
         )
+

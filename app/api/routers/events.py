@@ -3,6 +3,7 @@ from app.api.schemas.event import EventRequest, EventResponse
 from uuid import uuid4
 import logging
 from app.constants import CORRELATION_HDR, EventType
+import time
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/events", tags=["events"])
@@ -56,7 +57,7 @@ async def create_event(event: EventRequest, request: Request, response: Response
         },
     )
     try:
-        request.app.state.dispatcher.enqueue(event, correlation_id)
+        request.app.state.dispatcher.enqueue(event, time.monotonic(), correlation_id)
     except TimeoutError:
         logger.error(
             "enqueue_timeout",

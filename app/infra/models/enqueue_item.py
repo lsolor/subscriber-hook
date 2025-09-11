@@ -19,3 +19,4 @@ class EnqueueItem:
         self.endpoint_url = endpoint_url
         self.attempts = 1  # Number of delivery attempts
         self.max_attempts = max_attempts
+        self.idempotent_key = f"{self.event_type}:{self.event_id}:{self.endpoint_url}"

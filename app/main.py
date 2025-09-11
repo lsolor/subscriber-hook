@@ -21,16 +21,18 @@ async def lifespan(app: FastAPI):
         "max_timeout": 30,
         "jitter": 0.2
     }
-    registry = { EventType.USER_CREATED: ["foo.com", "plaaaa.com"],
-                EventType.EMAIL_NOTIFICATION: ["bar.com", "gherk.com"]
+    registry = { EventType.USER_CREATED: ["http://localhost:8080/ok", "http://localhost:8080/flaky"],
+                EventType.EMAIL_NOTIFICATION: ["http://localhost:8080/throttle-then-ok", "http://localhost:8080/forbidden"]
 
     }
-    dedup = defaultdict(str)
+    dedup = defaultdict(str) #(type:event_id:endpoint_url) -> (queued, in-process, processed, failed)
     dlq = []
-    event = Event
+    event = Event()
     q = InMemoryQueue()
     
-    metrics= defaultdict(int)
+    metrics= {"success": 0,
+              "failure": 0,
+              "retries": 0} # success,failure, retries
     w = Worker(queue=q, config= c, dedup=dedup, dlq=dlq, metrics=metrics, stop_event=event)
     app.state.queue = q
 

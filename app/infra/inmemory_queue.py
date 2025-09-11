@@ -15,6 +15,7 @@ class InMemoryQueue:
         self._heap: list[tuple[float, int, EnqueueItem]] = []
         self._lock = threading.Lock()
         self._seq = 0
+        self.dlq = []
 
     def _next_seq(self) -> int:
         self._seq += 1
@@ -29,12 +30,18 @@ class InMemoryQueue:
             seq = self._next_seq()
             heapq.heappush(self._heap, (float(due_time), seq, item))
 
-    def dequeue(self) -> tuple[float, EnqueueItem] | tuple[None, None]:
+    def dequeue(self, now) -> tuple[float, EnqueueItem] | tuple[None, None]:
         with self._lock:
             if not self._heap:
-                return None, None
+                return None
+            if self.peek()[0] < now:
+                return None
             due_time, _seq, item = heapq.heappop(self._heap)
-            return due_time, item
+            return item
+    
+
+    def to_dlq(self,item,reason):
+        self.dlq.append((item,reason))
 
     def peek(self) -> tuple[float, EnqueueItem] | tuple[None, None]:
         with self._lock:

@@ -12,6 +12,34 @@ curl -i -X POST localhost:8000/events/ \
   -d '{"id":"123","type":"email.notification","data":{"email":"user@example.com"}}'
 
   
+### 9/11 Note:
+TODO: Make unit tests for the Success worker
+
+- Worker needs to be able to pull the message and attempt the webhook and update the status of it
+- if message is successful, update status to completed, update metric count, and do not add to queue
+- if message is 429 or 50x and there are still attempts left, requeu,update metric count, update status. We will treat 429 as same here and in future make that logic there
+- if message is other 40x or no more attempts left, then update metric, update status, add to dlq  (maybe out of scope)
+- if q is empty then it sleeps until the due time
+- update readme to include the worker at this point 
+
+contracts: worker
+ worker dequeues a Tuple[dueTime, Enqueue Item], updates status  
+ worker makes POST request with payload and endpoint 
+ worker resolves 
+ on failure with more attempt it calcuclates retry and due time 
+
+Tracers
+- need to stub the responses for different urls, just generally 
+
+Happy Path Test 
+
+Make it Pass
+
+One Error Case
+
+Operability Pass
+
+Wrap it up
 Functional (top 3)
 - At-least-once delivery with idempotency per (event_id, endpoint).
 - Retry with exponential backoff + jitter, with outcome rules: 2xx=success; 5xx/timeout/429=retry (honor Retry-After); most 4xx=terminal.
